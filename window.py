@@ -62,7 +62,7 @@ class GameWindow(arcade.Window):
                 self.game_matriz[square_x - 1][square_y - 1] = sprite
                 self.game_matriz[self.first_click[0] - 1][
                     self.first_click[1] - 1
-                ] = sprite
+                ] = None
 
                 self.first_click = None
         else:
@@ -107,23 +107,23 @@ class GameWindow(arcade.Window):
         first_row = 1 if player_number == 1 else 8
         second_row = 2 if player_number == 1 else 7
 
-        player.player_list.append(RookSprite(1, first_row))
-        player.player_list.append(HorseSprite(2, first_row))
-        player.player_list.append(Bishop(3, first_row))
-        player.player_list.append(King(4, first_row))
-        player.player_list.append(Queen(5, first_row))
-        player.player_list.append(Bishop(6, first_row))
-        player.player_list.append(HorseSprite(7, first_row))
-        player.player_list.append(RookSprite(8, first_row))
+        player.player_list.append(RookSprite(1, first_row, player_number == 2))
+        player.player_list.append(HorseSprite(2, first_row, player_number == 2))
+        player.player_list.append(Bishop(3, first_row, player_number == 2))
+        player.player_list.append(King(4, first_row, player_number == 2))
+        player.player_list.append(Queen(5, first_row, player_number == 2))
+        player.player_list.append(Bishop(6, first_row, player_number == 2))
+        player.player_list.append(HorseSprite(7, first_row, player_number == 2))
+        player.player_list.append(RookSprite(8, first_row, player_number == 2))
 
-        player.player_list.append(Pawn(1, second_row))
-        player.player_list.append(Pawn(2, second_row))
-        player.player_list.append(Pawn(3, second_row))
-        player.player_list.append(Pawn(4, second_row))
-        player.player_list.append(Pawn(5, second_row))
-        player.player_list.append(Pawn(6, second_row))
-        player.player_list.append(Pawn(7, second_row))
-        player.player_list.append(Pawn(8, second_row))
+        player.player_list.append(Pawn(1, second_row, player_number == 2))
+        player.player_list.append(Pawn(2, second_row, player_number == 2))
+        player.player_list.append(Pawn(3, second_row, player_number == 2))
+        player.player_list.append(Pawn(4, second_row, player_number == 2))
+        player.player_list.append(Pawn(5, second_row, player_number == 2))
+        player.player_list.append(Pawn(6, second_row, player_number == 2))
+        player.player_list.append(Pawn(7, second_row, player_number == 2))
+        player.player_list.append(Pawn(8, second_row, player_number == 2))
 
         return player
 

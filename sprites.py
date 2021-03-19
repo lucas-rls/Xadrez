@@ -30,30 +30,54 @@ class AbstractSprite(arcade.Sprite):
 
 
 class RookSprite(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/006-rook.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/006-rook-dark.png" if dark else "./icons/png/006-rook.png",
+            pos_x,
+            pos_y,
+        )
 
 
 class HorseSprite(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/010-horse.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/010-horse-dark.png" if dark else "./icons/png/010-horse.png",
+            pos_x,
+            pos_y,
+        )
 
 
 class Bishop(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/016-bishop.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/016-bishop-dark.png" if dark else "./icons/png/016-bishop.png",
+            pos_x,
+            pos_y,
+        )
 
 
 class King(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/009-king.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/009-king-dark.png" if dark else "./icons/png/009-king.png",
+            pos_x,
+            pos_y,
+        )
 
 
 class Queen(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/007-queen.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/007-queen-dark.png" if dark else "./icons/png/007-queen.png",
+            pos_x,
+            pos_y,
+        )
 
 
 class Pawn(AbstractSprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__("./icons/png/008-pawn.png", pos_x, pos_y)
+    def __init__(self, pos_x, pos_y, dark):
+        super().__init__(
+            "./icons/png/008-pawn-dark.png" if dark else "./icons/png/008-pawn.png",
+            pos_x,
+            pos_y,
+        )

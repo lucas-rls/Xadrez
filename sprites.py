@@ -98,6 +98,22 @@ class HorseSprite(AbstractSprite):
             player_number,
         )
 
+    def check_move(self, square_x, square_y, game_matriz):
+        if not super().check_move(square_x, square_y, game_matriz):
+            return False
+
+        # Se apenas de movimentar em um dos eixos
+        if (square_x - self.square_x != 0 and square_y - self.square_y == 0) or (
+            square_x - self.square_x == 0 and square_y - self.square_y != 0
+        ):
+            return False
+
+        # Se o número de casas andadas for diferente de 3
+        if (abs(square_x - self.square_x) + abs(square_y - self.square_y)) != 3:
+            return False
+
+        return True
+
 
 class Bishop(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
@@ -151,13 +167,16 @@ class Pawn(AbstractSprite):
         if not super().check_move(square_x, square_y, game_matriz):
             return False
 
+        # Cria lista para saber a ordem da subtração na condição dependendo do jogador
         y_diff = (
             [square_y, self.square_y]
             if self.player_number == 1
             else [self.square_y, square_y]
         )
 
-        # Se o movimento não for em apenas um eixo retorna False
+        # Se o movimento for no eixo x
+        # Ou se estiver andando para trás
+        # Ou se não for a primeira rodada e estiver andando mais que uma casa
         if (square_x - self.square_x != 0) or (
             y_diff[0] - y_diff[1] <= 0
             or (y_diff[0] - y_diff[1] > 1 and not self._first_round)

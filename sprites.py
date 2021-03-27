@@ -145,3 +145,25 @@ class Pawn(AbstractSprite):
             pos_y,
             player_number,
         )
+        self._first_round = True
+
+    def check_move(self, square_x, square_y, game_matriz):
+        if not super().check_move(square_x, square_y, game_matriz):
+            return False
+
+        y_diff = (
+            [square_y, self.square_y]
+            if self.player_number == 1
+            else [self.square_y, square_y]
+        )
+
+        # Se o movimento não for em apenas um eixo retorna False
+        if (square_x - self.square_x != 0) or (
+            y_diff[0] - y_diff[1] <= 0
+            or (y_diff[0] - y_diff[1] > 1 and not self._first_round)
+            or y_diff[0] - y_diff[1] > 2
+        ):
+            return False
+
+        self._first_round = False
+        return True

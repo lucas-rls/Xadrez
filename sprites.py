@@ -200,14 +200,11 @@ class Queen(AbstractSprite):
             variavel = indX if yMov == 0 else indY
             fixo = indY if yMov == 0 else indX
             qtd = xMov if yMov == 0 else yMov
-            print("var: ",variavel, "fix: ",fixo)
             for i in range(0, qtd, incX if yMov == 0 else incY):
                 variavel= variavel + (incX if yMov==0 else incY)
                 hor = variavel if yMov == 0 else fixo
                 vert = fixo if yMov==0 else variavel
-                print("Hor:",hor, "Vert:",vert)
                 if(game_matriz[hor][vert]):
-                    print(game_matriz[hor][vert])
                     return False
             return True
 

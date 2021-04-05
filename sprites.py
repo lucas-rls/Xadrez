@@ -126,6 +126,28 @@ class Bishop(AbstractSprite):
             player_number,
         )
 
+    def check_move(self, square_x, square_y, game_matriz):
+        if not super().check_move(square_x, square_y, game_matriz):
+            return False
+
+        xMov = square_x - self.square_x
+        yMov = square_y - self.square_y
+
+        if (abs(xMov) != abs(yMov)):
+            return False
+
+        indX = self.square_x - 1
+        indY = self.square_y - 1
+        incX = 1 if xMov > 0 else -1
+        incY = 1 if yMov > 0 else -1
+
+        for i in range(0, abs(xMov)):
+            indX+=incX
+            indY+=incY
+            if(game_matriz[indX][indY]):
+                return False
+        return True
+
 
 class King(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
@@ -138,6 +160,18 @@ class King(AbstractSprite):
             player_number,
         )
 
+    def check_move(self, square_x, square_y, game_matriz):
+        if not super().check_move(square_x, square_y, game_matriz):
+            return False
+
+        xMov = square_x - self.square_x
+        yMov = square_y - self.square_y
+
+        if (abs(xMov) > 1 or abs(yMov) > 1):
+            return False
+
+        return True
+
 
 class Queen(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
@@ -149,6 +183,44 @@ class Queen(AbstractSprite):
             pos_y,
             player_number,
         )
+
+    def check_move(self, square_x, square_y, game_matriz):
+        if not super().check_move(square_x, square_y, game_matriz):
+            return False
+
+        xMov = square_x - self.square_x
+        yMov = square_y - self.square_y
+
+        indX = self.square_x - 1
+        indY = self.square_y - 1
+        incX = 1 if xMov > 0 else -1
+        incY = 1 if yMov > 0 else -1
+
+        if(xMov==0 or yMov==0):
+            variavel = indX if yMov == 0 else indY
+            fixo = indY if yMov == 0 else indX
+            qtd = xMov if yMov == 0 else yMov
+            print("var: ",variavel, "fix: ",fixo)
+            for i in range(0, qtd, incX if yMov == 0 else incY):
+                variavel= variavel + (incX if yMov==0 else incY)
+                hor = variavel if yMov == 0 else fixo
+                vert = fixo if yMov==0 else variavel
+                print("Hor:",hor, "Vert:",vert)
+                if(game_matriz[hor][vert]):
+                    print(game_matriz[hor][vert])
+                    return False
+            return True
+
+        if (abs(xMov) == abs(yMov)):
+            for i in range(0, abs(xMov)):
+                indX += incX
+                indY += incY
+                if (game_matriz[indX][indY]):
+                    return False
+            return True
+
+        return False
+
 
 
 class Pawn(AbstractSprite):

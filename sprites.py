@@ -3,10 +3,11 @@ from constants import SPRITE_SCALING_PLAYER, SQUARE_SIZE
 
 
 class AbstractSprite(arcade.Sprite):
-    def __init__(self, image, pos_x, pos_y, player_number):
+    def __init__(self, image, pos_x, pos_y, player, player_number):
         super().__init__(image, SPRITE_SCALING_PLAYER)
         self._square_x = pos_x
         self._square_y = pos_y
+        self._player = player
         self._player_number = player_number
         self.center_x = SQUARE_SIZE * pos_x - SQUARE_SIZE / 2
         self.center_y = SQUARE_SIZE * pos_y - SQUARE_SIZE / 2
@@ -23,6 +24,10 @@ class AbstractSprite(arcade.Sprite):
     def player_number(self):
         return self._player_number
 
+    @property
+    def player(self):
+        return self._player
+
     @square_x.setter
     def square_x(self, pos_x):
         self._square_x = pos_x
@@ -38,20 +43,30 @@ class AbstractSprite(arcade.Sprite):
         self._player_number = player_number
 
     def check_move(self, square_x, square_y, game_matriz):
-        # Se o o segundo clique não tiver peça return True senão retorna False
+        # Se o o segundo clique não tiver peça returna True senão retorna False
         if not game_matriz[square_x - 1][square_y - 1]:
+            return True
+        return False
+
+    def check_capture(self, square_x, square_y, game_matriz):
+        if (
+            game_matriz[square_x - 1][square_y - 1]
+            and game_matriz[square_x - 1][square_y - 1].player_number
+            != self.player_number
+        ):
             return True
         return False
 
 
 class RookSprite(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/006-rook-dark.png"
             if player_number == 2
             else "./icons/png/006-rook.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
 
@@ -88,13 +103,14 @@ class RookSprite(AbstractSprite):
 
 
 class HorseSprite(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/010-horse-dark.png"
             if player_number == 2
             else "./icons/png/010-horse.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
 
@@ -116,13 +132,14 @@ class HorseSprite(AbstractSprite):
 
 
 class Bishop(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/016-bishop-dark.png"
             if player_number == 2
             else "./icons/png/016-bishop.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
 
@@ -150,13 +167,14 @@ class Bishop(AbstractSprite):
 
 
 class King(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/009-king-dark.png"
             if player_number == 2
             else "./icons/png/009-king.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
 
@@ -174,13 +192,14 @@ class King(AbstractSprite):
 
 
 class Queen(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/007-queen-dark.png"
             if player_number == 2
             else "./icons/png/007-queen.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
 
@@ -220,20 +239,22 @@ class Queen(AbstractSprite):
 
 
 class Pawn(AbstractSprite):
-    def __init__(self, pos_x, pos_y, player_number):
+    def __init__(self, pos_x, pos_y, player, player_number):
         super().__init__(
             "./icons/png/008-pawn-dark.png"
             if player_number == 2
             else "./icons/png/008-pawn.png",
             pos_x,
             pos_y,
+            player,
             player_number,
         )
         self._first_round = True
 
     def check_move(self, square_x, square_y, game_matriz):
         if not super().check_move(square_x, square_y, game_matriz):
-            return False
+            if super().check_capture(square_x, square_y, game_matriz):
+                return self.check_capture(square_x, square_y, game_matriz)
 
         # Cria lista para saber a ordem da subtração na condição dependendo do jogador
         y_diff = (
@@ -262,3 +283,18 @@ class Pawn(AbstractSprite):
 
         self._first_round = False
         return True
+
+    def check_capture(self, square_x, square_y, game_matriz):
+        y_diff = (
+            [square_y, self.square_y]
+            if self.player_number == 1
+            else [self.square_y, square_y]
+        )
+
+        opponent_sprint = game_matriz[square_x - 1][square_y - 1]
+        opponent_player = game_matriz[square_x - 1][square_y - 1].player
+
+        if y_diff[0] - y_diff[1] == 1 and abs(square_x - self.square_x) == 1:
+            opponent_player.player_list.remove(opponent_sprint)
+            return True
+        return False

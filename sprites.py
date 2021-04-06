@@ -133,7 +133,7 @@ class Bishop(AbstractSprite):
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
-        if (abs(xMov) != abs(yMov)):
+        if abs(xMov) != abs(yMov):
             return False
 
         indX = self.square_x - 1
@@ -142,9 +142,9 @@ class Bishop(AbstractSprite):
         incY = 1 if yMov > 0 else -1
 
         for i in range(0, abs(xMov)):
-            indX+=incX
-            indY+=incY
-            if(game_matriz[indX][indY]):
+            indX += incX
+            indY += incY
+            if game_matriz[indX][indY]:
                 return False
         return True
 
@@ -167,7 +167,7 @@ class King(AbstractSprite):
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
-        if (abs(xMov) > 1 or abs(yMov) > 1):
+        if abs(xMov) > 1 or abs(yMov) > 1:
             return False
 
         return True
@@ -196,28 +196,27 @@ class Queen(AbstractSprite):
         incX = 1 if xMov > 0 else -1
         incY = 1 if yMov > 0 else -1
 
-        if(xMov==0 or yMov==0):
+        if xMov == 0 or yMov == 0:
             variavel = indX if yMov == 0 else indY
             fixo = indY if yMov == 0 else indX
             qtd = xMov if yMov == 0 else yMov
             for i in range(0, qtd, incX if yMov == 0 else incY):
-                variavel= variavel + (incX if yMov==0 else incY)
+                variavel = variavel + (incX if yMov == 0 else incY)
                 hor = variavel if yMov == 0 else fixo
-                vert = fixo if yMov==0 else variavel
-                if(game_matriz[hor][vert]):
+                vert = fixo if yMov == 0 else variavel
+                if game_matriz[hor][vert]:
                     return False
             return True
 
-        if (abs(xMov) == abs(yMov)):
+        if abs(xMov) == abs(yMov):
             for i in range(0, abs(xMov)):
                 indX += incX
                 indY += incY
-                if (game_matriz[indX][indY]):
+                if game_matriz[indX][indY]:
                     return False
             return True
 
         return False
-
 
 
 class Pawn(AbstractSprite):
@@ -245,9 +244,17 @@ class Pawn(AbstractSprite):
 
         # Se o movimento for no eixo x
         # Ou se estiver andando para trás
+        # Ou se tiver uma peça no meio do caminho no primeiro movimento
         # Ou se não for a primeira rodada e estiver andando mais que uma casa
         if (square_x - self.square_x != 0) or (
             y_diff[0] - y_diff[1] <= 0
+            or (
+                self._first_round
+                and y_diff[0] - y_diff[1] == 2
+                and game_matriz[square_x - 1][
+                    int(self.square_y + (square_y - self.square_y) / 2) - 1
+                ]
+            )
             or (y_diff[0] - y_diff[1] > 1 and not self._first_round)
             or y_diff[0] - y_diff[1] > 2
         ):

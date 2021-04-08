@@ -48,9 +48,7 @@ class AbstractSprite(arcade.Sprite):
         square = game_matriz[square_x - 1][square_y - 1]
         if square:
             if square._player_number != self._player_number:
-                print("deu true")
                 return True
-        print("deu false")
         return False
 
 class RookSprite(AbstractSprite):
@@ -159,13 +157,13 @@ class Bishop(AbstractSprite):
             indY += incY
             indX += incX
             if game_matriz[indX][indY]:
-                print("existe ",game_matriz[indX][indY])
                 return False
         return True
 
 
 class King(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
+        is_in_check = False
         super().__init__(
             "./icons/png/009-king-dark.png"
             if player_number == 2
@@ -255,8 +253,6 @@ class Pawn(AbstractSprite):
         xMov = square_x - self.square_x #if self._player_number == 1 else square_x - self.square_x
         yMov = square_y - self.square_y # if self._player_number == 1 else square_y - self.square_y
 
-        print("xMox: ",xMov)
-        print("yMox: ",yMov)
         if(capture_mov):
             if abs(xMov) == 1 and abs(yMov) == 1:
                 return True

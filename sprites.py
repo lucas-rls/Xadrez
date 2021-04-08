@@ -39,10 +39,19 @@ class AbstractSprite(arcade.Sprite):
 
     def check_move(self, square_x, square_y, game_matriz):
         # Se o o segundo clique não tiver peça return True senão retorna False
-        if not game_matriz[square_x - 1][square_y - 1]:
-            return True
-        return False
+        #if not game_matriz[square_x - 1][square_y - 1]:
+        #    return True
+        #return False
+        return True
 
+    def check_capture(self,square_x, square_y, game_matriz):
+        square = game_matriz[square_x - 1][square_y - 1]
+        if square:
+            if square._player_number != self._player_number:
+                print("deu true")
+                return True
+        print("deu false")
+        return False
 
 class RookSprite(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
@@ -130,21 +139,27 @@ class Bishop(AbstractSprite):
         if not super().check_move(square_x, square_y, game_matriz):
             return False
 
+        #verifica o numero de casas andadas nos eixos
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
         if abs(xMov) != abs(yMov):
             return False
 
+        #cria uma var chamada indice, que eh a exata posicao da peca no tabuleiro
         indX = self.square_x - 1
         indY = self.square_y - 1
+
+        #define o incremento
         incX = 1 if xMov > 0 else -1
         incY = 1 if yMov > 0 else -1
 
-        for i in range(0, abs(xMov)):
-            indX += incX
+        #percorre as casas entre a peca e o destino
+        for i in range(1, abs(xMov)):
             indY += incY
+            indX += incX
             if game_matriz[indX][indY]:
+                print("existe ",game_matriz[indX][indY])
                 return False
         return True
 
@@ -193,6 +208,7 @@ class Queen(AbstractSprite):
 
         indX = self.square_x - 1
         indY = self.square_y - 1
+
         incX = 1 if xMov > 0 else -1
         incY = 1 if yMov > 0 else -1
 
@@ -209,7 +225,7 @@ class Queen(AbstractSprite):
             return True
 
         if abs(xMov) == abs(yMov):
-            for i in range(0, abs(xMov)):
+            for i in range(1, abs(xMov)):
                 indX += incX
                 indY += incY
                 if game_matriz[indX][indY]:
@@ -235,6 +251,18 @@ class Pawn(AbstractSprite):
         if not super().check_move(square_x, square_y, game_matriz):
             return False
 
+        capture_mov = super().check_capture(square_x, square_y, game_matriz)
+        xMov = square_x - self.square_x #if self._player_number == 1 else square_x - self.square_x
+        yMov = square_y - self.square_y # if self._player_number == 1 else square_y - self.square_y
+
+        print("xMox: ",xMov)
+        print("yMox: ",yMov)
+        if(capture_mov):
+            if abs(xMov) == 1 and abs(yMov) == 1:
+                return True
+            elif xMov == 0:
+                return False
+
         # Cria lista para saber a ordem da subtração na condição dependendo do jogador
         y_diff = (
             [square_y, self.square_y]
@@ -259,6 +287,7 @@ class Pawn(AbstractSprite):
             or y_diff[0] - y_diff[1] > 2
         ):
             return False
+
 
         self._first_round = False
         return True

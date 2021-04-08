@@ -2,6 +2,9 @@ import random
 import arcade
 import math
 import os
+
+import numpy as np
+
 from constants import (
     CHESSBOARD_SIZE,
     SQUARE_SIZE,
@@ -11,7 +14,7 @@ from constants import (
     DARKER_SQUARE,
 )
 from player import Player
-from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
+from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn, AbstractSprite
 import math
 from pprint import pprint
 
@@ -22,8 +25,13 @@ class GameWindow(arcade.Window):
 
         self.player_1 = None
         self.player_2 = None
-        self.first_click = None
+#       self.first_click = None
         self.game_matriz = [[0] * 8 for i in range(8)]
+
+        self.turn = 1
+        self.active_player = 1
+        self.waiting_player = 2
+        self.selected_sprite = None
 
     def setup(self):
         self.player_1 = self.create_player("Lucas", 1)
@@ -48,31 +56,59 @@ class GameWindow(arcade.Window):
             y / SQUARE_SIZEx + 1 if y % SQUARE_SIZE == 0 else math.ceil(y / SQUARE_SIZE)
         )
 
-        if self.first_click:
-            # Recupera a instância da peça no quadrado do primeiro clique
-            sprite = self.game_matriz[self.first_click[0] - 1][self.first_click[1] - 1]
+        # Recupera a instância da peça no quadrado do primeiro clique
+        sprite = self.game_matriz[square_x - 1][square_y - 1]
 
-            # Checa se o movimento é permitido
-            if sprite.check_move(square_x, square_y, self.game_matriz):
-                sprite.square_x = square_x
-                sprite.square_y = square_y
-
-                self.game_matriz[square_x - 1][square_y - 1] = sprite
-                self.game_matriz[self.first_click[0] - 1][
-                    self.first_click[1] - 1
-                ] = None
-
-                self.first_click = None
+        if (sprite):
+            if (sprite._player_number == self.active_player):
+                self.selected_sprite = sprite
             else:
-                self.first_click = None
+                if(self.selected_sprite):
+                    if (self.selected_sprite.check_move(square_x, square_y, self.game_matriz)):
+                        print(sprite, "morreu")
+                        self.game_matriz[square_x - 1][square_y - 1] = None
+                        self.get_player(self.waiting_player).send_to_cemetery(sprite)
+                        self.selected_sprite.square_x = square_x
+                        self.selected_sprite.square_y = square_y
+                        self.change_turn()
+
         else:
-            if self.game_matriz[square_x - 1][square_y - 1]:
-                self.first_click = [square_x, square_y]
+            if self.selected_sprite:
+                if self.selected_sprite.check_move(square_x, square_y, self.game_matriz):
+                    self.selected_sprite.square_x = square_x
+                    self.selected_sprite.square_y = square_y
+                    self.change_turn()
+
+        # if self.first_click:
+        #     # Recupera a instância da peça no quadrado do primeiro clique
+        #     sprite = self.game_matriz[self.first_click[0] - 1][self.first_click[1] - 1]
+        #
+        #     # Checa se o movimento é permitido
+        #     if sprite.check_move(square_x, square_y, self.game_matriz):
+        #         sprite.square_x = square_x
+        #         sprite.square_y = square_y
+        #         if (sprite.check_capture(square_x, square_y, self.game_matriz)):
+        #             self.get_player(self.turn % 2 + 1).send_to_cemitery(
+        #                 self.game_matrizgame_matriz[square_x - 1][square_y - 1])
+        #
+        #         self.game_matriz[square_x - 1][square_y - 1] = sprite
+        #         self.game_matriz[self.first_click[0] - 1][
+        #             self.first_click[1] - 1
+        #             ] = None
+        #
+        #         self.first_click = None
+        #     else:
+        #         self.first_click = None
+        # else:
+        #     if self.game_matriz[square_x - 1][square_y - 1]:
+        #         self.first_click = [square_x, square_y]
 
     def initialize_matriz(self, p1, p2):
+        for i in range(8):
+            for j in range (8):
+                self.game_matriz[i][j] = 0
         for sprite in p1:
             self.game_matriz[sprite.square_x - 1][sprite.square_y - 1] = sprite
-
         for sprite in p2:
             self.game_matriz[sprite.square_x - 1][sprite.square_y - 1] = sprite
 
@@ -102,8 +138,7 @@ class GameWindow(arcade.Window):
 
     @staticmethod
     def create_player(name, player_number):
-        player = Player(name)
-
+        player = Player(name, player_number)
         first_row = 1 if player_number == 1 else 8
         second_row = 2 if player_number == 1 else 7
 
@@ -127,6 +162,17 @@ class GameWindow(arcade.Window):
 
         return player
 
+    def get_player(self, number):
+        if number == 1:
+            return self.player_1
+        return self.player_2
+
+    def change_turn(self):
+        temp = self.active_player
+        self.active_player = self.waiting_player
+        self.waiting_player = temp
+        self.turn+=1
+        self.selected_sprite = None
 
 def main():
     game = GameWindow()

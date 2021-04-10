@@ -68,17 +68,21 @@ class GameWindow(arcade.Window):
                         self.get_waiting_player().send_to_cemetery(sprite)
 
                         # chama a verificacao do check e realiza o movimento se tudo esta ok
-                        self.move_and_verify_check(square_x, square_y, sprite)
+                        if self.move_and_verify_check(square_x, square_y, sprite):
+                            # verifica se o rei do adversario ficara em check e atualiza o status do rei adversario
+                            self.results_check(self.waiting_player)
+                            self.change_turn()
 
         else:
             if self.selected_sprite:
                 if self.selected_sprite.check_move(square_x, square_y, self.game_matriz):
-                    # checa promocao do peao
-                    if self.selected_sprite.__class__.__name__ == "Pawn":
-                        if (square_y == 8 and self.active_player == 1) or (square_y == 1 and self.active_player == 2):
-                            self.promote_pawn(self.selected_sprite, self.active_player)
-
-                    self.move_and_verify_check(square_x, square_y, sprite)
+                    if self.move_and_verify_check(square_x, square_y, sprite):
+                        #checa promocao do peao
+                        if self.selected_sprite.__class__.__name__ == "Pawn":
+                            if (square_y == 8 and self.active_player == 1) or (square_y == 1 and self.active_player == 2):
+                                self.promote_pawn(self.selected_sprite, self.active_player)
+                        self.results_check(self.waiting_player)
+                        self.change_turn()
 
     def initialize_matriz(self):
         p1 = self.get_active_player().player_list
@@ -169,7 +173,7 @@ class GameWindow(arcade.Window):
         # pega o player atual
         pl = self.get_active_player()
         # substitui seu peao por uma rainha
-        pl.player_list.append(Queen(pawn_sprite.square_x, pawn_sprite.square_y+1, pl.player_number))
+        pl.player_list.append(Queen(pawn_sprite.square_x, pawn_sprite.square_y, pl.player_number))
         # remove o peao da lista de sprites
         pl.player_list.remove(pawn_sprite)
 
@@ -225,10 +229,8 @@ class GameWindow(arcade.Window):
             self.selected_sprite.square_y = old_square_y
             print("voltou o movimento por colocar o rei em check")
             self.results_check(self.waiting_player)
-            return
-        # verifica se o rei do adversario ficara em check e atualiza o status do rei adversario
-        self.results_check(self.waiting_player)
-        self.change_turn()
+            return False
+        return True
 
 
 def main():

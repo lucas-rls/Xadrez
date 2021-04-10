@@ -17,3 +17,7 @@ class Player:
             if sprite.__class__.__name__ == "King":
                 return sprite
         return None
+
+    def change_king_check_status(self, status):
+        king = self.get_king()
+        king.is_in_check = status

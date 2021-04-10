@@ -18,7 +18,6 @@ class GameWindow(arcade.Window):
 
         self.player_1 = None
         self.player_2 = None
-        #       self.first_click = None
         self.game_matriz = [[0] * 8 for i in range(8)]
 
         self.turn = 1
@@ -48,7 +47,7 @@ class GameWindow(arcade.Window):
         square_y = (
             y / SQUARE_SIZEx + 1 if y % SQUARE_SIZE == 0 else math.ceil(y / SQUARE_SIZE)
         )
-
+        print(square_x, square_y)
         # Recupera a instância da peça no quadrado do primeiro clique
         sprite = self.game_matriz[square_x - 1][square_y - 1]
 
@@ -76,6 +75,12 @@ class GameWindow(arcade.Window):
         else:
             if self.selected_sprite:
                 if self.selected_sprite.check_move(square_x, square_y, self.game_matriz):
+                    #trata condicao do en passant
+                    if self.selected_sprite.__class__.__name__ == "Pawn" and square_y == 3 or square_y == 6:
+                        sprite = self.game_matriz[square_x - 1][square_y - 1]
+                        if sprite:
+                            self.get_waiting_player().send_to_cemetery(sprite)
+
                     if self.move_and_verify_check(square_x, square_y, sprite):
                         #checa promocao do peao
                         if self.selected_sprite.__class__.__name__ == "Pawn":
@@ -198,13 +203,10 @@ class GameWindow(arcade.Window):
             for sprite in pl_2.player_list:
                 if sprite.check_move(king.square_x, king.square_y, self.game_matriz):
                     print("CHECK")
-                    # muda o status do rei para "em check"
                     king.is_in_check = True
                     return True
-                # se o rei nao esta mais em check, reseta a flag de check
-                king.is_in_check = False
-
         # retorna false se o rei nao esta em check
+        king.is_in_check = False
         return False
 
     def move_and_verify_check(self, square_x, square_y, sprite):
@@ -227,8 +229,9 @@ class GameWindow(arcade.Window):
                 self.get_player(self.waiting_player).cemetery.remove(sprite)
             self.selected_sprite.square_x = old_square_x
             self.selected_sprite.square_y = old_square_y
+            self.get_active_player().change_king_check_status(False)
             print("voltou o movimento por colocar o rei em check")
-            self.results_check(self.waiting_player)
+#            self.results_check(self.waiting_player)
             return False
         return True
 

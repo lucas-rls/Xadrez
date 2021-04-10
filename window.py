@@ -10,6 +10,7 @@ from constants import (
 from player import Player
 from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
 import math
+from arcade import color
 
 
 class GameWindow(arcade.Window):
@@ -51,19 +52,21 @@ class GameWindow(arcade.Window):
         # Recupera a instância da peça no quadrado do primeiro clique
         sprite = self.game_matriz[square_x - 1][square_y - 1]
 
-        #se clicou em um lugar que tenha um sprite...
+        # se clicou em um lugar que tenha um sprite...
         if sprite:
-            #caso o sprite seja do jogador, seleciona o sprite clicado
+            # caso o sprite seja do jogador, seleciona o sprite clicado
             if sprite._player_number == self.active_player:
                 self.selected_sprite = sprite
-            #caso seja um sprite do adversario
+            # caso seja um sprite do adversario
             else:
-                #se ha um sprite selecionado...
+                # se ha um sprite selecionado...
                 if self.selected_sprite:
-                    #testa o movimento pra aquele lugar...
-                    if self.selected_sprite.check_move(square_x, square_y, self.game_matriz):
-                        #se o movimento eh valido....
-                        #envia o sprite pro cemiterio do adversario
+                    # testa o movimento pra aquele lugar...
+                    if self.selected_sprite.check_move(
+                        square_x, square_y, self.game_matriz
+                    ):
+                        # se o movimento eh valido....
+                        # envia o sprite pro cemiterio do adversario
                         self.get_waiting_player().send_to_cemetery(sprite)
 
                         # chama a verificacao do check e realiza o movimento se tudo esta ok
@@ -74,18 +77,28 @@ class GameWindow(arcade.Window):
 
         else:
             if self.selected_sprite:
-                if self.selected_sprite.check_move(square_x, square_y, self.game_matriz):
-                    #trata condicao do en passant
-                    if self.selected_sprite.__class__.__name__ == "Pawn" and square_y == 3 or square_y == 6:
+                if self.selected_sprite.check_move(
+                    square_x, square_y, self.game_matriz
+                ):
+                    # trata condicao do en passant
+                    if (
+                        self.selected_sprite.__class__.__name__ == "Pawn"
+                        and square_y == 3
+                        or square_y == 6
+                    ):
                         sprite = self.game_matriz[square_x - 1][square_y - 1]
                         if sprite:
                             self.get_waiting_player().send_to_cemetery(sprite)
 
                     if self.move_and_verify_check(square_x, square_y, sprite):
-                        #checa promocao do peao
+                        # checa promocao do peao
                         if self.selected_sprite.__class__.__name__ == "Pawn":
-                            if (square_y == 8 and self.active_player == 1) or (square_y == 1 and self.active_player == 2):
-                                self.promote_pawn(self.selected_sprite, self.active_player)
+                            if (square_y == 8 and self.active_player == 1) or (
+                                square_y == 1 and self.active_player == 2
+                            ):
+                                self.promote_pawn(
+                                    self.selected_sprite, self.active_player
+                                )
                         self.results_check(self.waiting_player)
                         self.change_turn()
 
@@ -100,8 +113,7 @@ class GameWindow(arcade.Window):
         for sprite in p2:
             self.game_matriz[sprite.square_x - 1][sprite.square_y - 1] = sprite
 
-    @staticmethod
-    def render_board():
+    def render_board(self):
         flag = False
 
         # Loop for each row
@@ -123,6 +135,16 @@ class GameWindow(arcade.Window):
 
                 flag = not flag
             flag = not flag
+
+        if self.selected_sprite:
+            # Draw the item
+            arcade.draw_rectangle_filled(
+                (self.selected_sprite.square_x - 1) * SQUARE_SIZE + LEFT_MARGIN,
+                (self.selected_sprite.square_y - 1) * SQUARE_SIZE + BOTTOM_MARGIN,
+                SQUARE_SIZE,
+                SQUARE_SIZE,
+                (255, 191, 0),
+            )
 
     @staticmethod
     def create_player(name, player_number):
@@ -178,7 +200,9 @@ class GameWindow(arcade.Window):
         # pega o player atual
         pl = self.get_active_player()
         # substitui seu peao por uma rainha
-        pl.player_list.append(Queen(pawn_sprite.square_x, pawn_sprite.square_y, pl.player_number))
+        pl.player_list.append(
+            Queen(pawn_sprite.square_x, pawn_sprite.square_y, pl.player_number)
+        )
         # remove o peao da lista de sprites
         pl.player_list.remove(pawn_sprite)
 
@@ -189,7 +213,11 @@ class GameWindow(arcade.Window):
         pl = self.get_player(player_number)
 
         # pl_2 = o jogador adversario do pl
-        pl_2 = self.get_active_player() if player_number == self.waiting_player else self.get_waiting_player()
+        pl_2 = (
+            self.get_active_player()
+            if player_number == self.waiting_player
+            else self.get_waiting_player()
+        )
 
         # atualiza a matriz antes de verificar
         self.initialize_matriz()
@@ -224,14 +252,14 @@ class GameWindow(arcade.Window):
         active_player_king_check = self.results_check(self.active_player)
         # se o movimento colocar o rei do jogador em check, nao permite q a jogada seja executada
         if active_player_king_check:
-            if (sprite):
+            if sprite:
                 self.game_matriz[square_x - 1][square_y - 1] = sprite
                 self.get_player(self.waiting_player).cemetery.remove(sprite)
             self.selected_sprite.square_x = old_square_x
             self.selected_sprite.square_y = old_square_y
             self.get_active_player().change_king_check_status(False)
             print("voltou o movimento por colocar o rei em check")
-#            self.results_check(self.waiting_player)
+            #            self.results_check(self.waiting_player)
             return False
         return True
 

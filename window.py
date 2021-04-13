@@ -146,6 +146,23 @@ class GameWindow(arcade.Window):
                 (255, 191, 0),
             )
 
+            for i in range(len(self.game_matriz)):
+                for j in range(len(self.game_matriz[i])):
+                    if self.selected_sprite.check_move(
+                        i + 1, j + 1, self.game_matriz
+                    ) and (
+                        not self.game_matriz[i][j]
+                        or self.selected_sprite.player_number
+                        != self.game_matriz[i][j].player_number
+                    ):
+                        arcade.draw_rectangle_filled(
+                            (i) * SQUARE_SIZE + LEFT_MARGIN,
+                            (j) * SQUARE_SIZE + BOTTOM_MARGIN,
+                            SQUARE_SIZE,
+                            SQUARE_SIZE,
+                            (0, 127, 255, 200),
+                        )
+
     @staticmethod
     def create_player(name, player_number):
         player = Player(name, player_number)

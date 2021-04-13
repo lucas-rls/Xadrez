@@ -143,7 +143,7 @@ class HorseSprite(AbstractSprite):
     def check_move(self, square_x, square_y, game_matriz):
         # Se apenas de movimentar em um dos eixos
         if (square_x - self.square_x != 0 and square_y - self.square_y == 0) or (
-                square_x - self.square_x == 0 and square_y - self.square_y != 0
+            square_x - self.square_x == 0 and square_y - self.square_y != 0
         ):
             return False
 
@@ -195,7 +195,11 @@ class King(AbstractSprite):
         yMov = square_y - self.square_y
 
         if abs(xMov) == 2 and yMov == 0 and self._first_round:
-            rook = game_matriz[0][self.square_y-1] if xMov < 0 else game_matriz[7][self.square_y-1]
+            rook = (
+                game_matriz[0][self.square_y - 1]
+                if xMov < 0
+                else game_matriz[7][self.square_y - 1]
+            )
             rook_mov = 2 if xMov < 0 else -3
             if rook.__class__.__name__ == "RookSprite":
                 if rook._first_round:
@@ -238,7 +242,9 @@ class Queen(AbstractSprite):
                 return True
         # se se moveu diagonalmente, detecta a colisao diagonal
         elif abs(xMov) == abs(yMov):
-            return not super().detect_diagonal_collision(square_x, square_y, game_matriz)
+            return not super().detect_diagonal_collision(
+                square_x, square_y, game_matriz
+            )
         return False
 
 
@@ -252,19 +258,29 @@ class Pawn(AbstractSprite):
             pos_y,
             player_number,
         )
+        self._initial_y = pos_y
         self._first_round = True
         self.en_passant_risk = False
 
     def check_move(self, square_x, square_y, game_matriz):
-        xMov = square_x - self.square_x  # if self._player_number == 1 else square_x - self.square_x
-        yMov = square_y - self.square_y  # if self._player_number == 1 else square_y - self.square_y
+        if self._first_round and self._initial_y != self.square_y:
+            self._first_round = False
+
+        xMov = (
+            square_x - self.square_x
+        )  # if self._player_number == 1 else square_x - self.square_x
+        yMov = (
+            square_y - self.square_y
+        )  # if self._player_number == 1 else square_y - self.square_y
 
         if abs(xMov) == 1 and abs(yMov) == 1:
-            if (self.player_number == 1 and square_y == 6) or (self.player_number == 2 and square_y == 3):
+            if (self.player_number == 1 and square_y == 6) or (
+                self.player_number == 2 and square_y == 3
+            ):
                 print("ok 1")
-                if not game_matriz[square_x-1][square_y-1]:
+                if not game_matriz[square_x - 1][square_y - 1]:
                     print("ok 2")
-                    candidate = game_matriz[square_x-1][self.square_y-1]
+                    candidate = game_matriz[square_x - 1][self.square_y - 1]
                     if candidate:
                         print("ok 3")
                         if candidate.__class__.__name__ == "Pawn":
@@ -296,23 +312,22 @@ class Pawn(AbstractSprite):
         # Ou se tiver uma peça no meio do caminho no primeiro movimento
         # Ou se não for a primeira rodada e estiver andando mais que uma casa
         if (square_x - self.square_x != 0) or (
-                y_diff[0] - y_diff[1] <= 0
-                or (
-                        self._first_round
-                        and y_diff[0] - y_diff[1] == 2
-                        and game_matriz[square_x - 1][
-                            int(self.square_y + (square_y - self.square_y) / 2) - 1
-                        ]
-                )
-                or (y_diff[0] - y_diff[1] > 1 and not self._first_round)
-                or y_diff[0] - y_diff[1] > 2
+            y_diff[0] - y_diff[1] <= 0
+            or (
+                self._first_round
+                and y_diff[0] - y_diff[1] == 2
+                and game_matriz[square_x - 1][
+                    int(self.square_y + (square_y - self.square_y) / 2) - 1
+                ]
+            )
+            or (y_diff[0] - y_diff[1] > 1 and not self._first_round)
+            or y_diff[0] - y_diff[1] > 2
         ):
             return False
 
-        if self._first_round and abs(square_y - self.square_y) == 2 :
+        if self._first_round and abs(square_y - self.square_y) == 2:
             self.en_passant_risk = True
         else:
             self.en_passant_risk = False
 
-        self._first_round = False
         return True

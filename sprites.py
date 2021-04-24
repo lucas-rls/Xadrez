@@ -37,10 +37,64 @@ class AbstractSprite(arcade.Sprite):
     def player_number(self, player_number):
         self._player_number = player_number
 
-    def check_move(self, square_x, square_y, game_matriz):
-        # Se o o segundo clique não tiver peça return True senão retorna False
-        if not game_matriz[square_x - 1][square_y - 1]:
-            return True
+    def check_capture(self, square_x, square_y, game_matriz):
+        square = game_matriz[square_x - 1][square_y - 1]
+        if square:
+            if square._player_number != self._player_number:
+                return True
+        return False
+
+    def detect_horizontal_collision(self, square_x, game_matriz):
+        # percorre as casas entre a peca e o destino
+        xMov = square_x - self.square_x
+
+        # cria uma var chamada indice, que eh a exata posicao da peca no tabuleiro
+        indX = self.square_x - 1
+
+        # define o incremento
+        incX = 1 if xMov > 0 else -1
+
+        for i in range(1, abs(xMov)):
+            indX += incX
+            if game_matriz[indX][self.square_y - 1]:
+                return True
+        return False
+
+    def detect_vertical_collision(self, square_y, game_matriz):
+        # percorre as casas entre a peca e o destino
+        yMov = square_y - self.square_y
+
+        # cria uma var chamada indice, que eh a exata posicao da peca no tabuleiro
+        indY = self.square_y - 1
+
+        # define o incremento
+        incY = 1 if yMov > 0 else -1
+
+        for i in range(1, abs(yMov)):
+            indY += incY
+            if game_matriz[self.square_x - 1][indY]:
+                return True
+        return False
+
+    def detect_diagonal_collision(self, square_x, square_y, game_matriz):
+        # percorre as casas entre a peca e o destino
+        xMov = square_x - self.square_x
+        yMov = square_y - self.square_y
+
+        # cria uma var chamada indice, que eh a exata posicao da peca no tabuleiro
+        indX = self.square_x - 1
+        indY = self.square_y - 1
+
+        # define o incremento
+        incX = 1 if xMov > 0 else -1
+        incY = 1 if yMov > 0 else -1
+
+        # percorre as casas entre a peca e o destino
+        for i in range(1, abs(xMov)):
+            indY += incY
+            indX += incX
+            if game_matriz[indX][indY]:
+                return True
         return False
 
 
@@ -54,37 +108,25 @@ class RookSprite(AbstractSprite):
             pos_y,
             player_number,
         )
+        self._first_round = True
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
 
-        # Se o movimento não for em apenas um eixo retorna False
-        if (square_x - self.square_x != 0 and square_y - self.square_y != 0) or (
-            square_y - self.square_y == 0 and square_x - self.square_x == 0
-        ):
-            return False
+        # verifica a quantidade de movimento em cada direcao
+        xMov = square_x - self.square_x
+        yMov = square_y - self.square_y
 
-        # Checa em qual eixo ocorreu o movimento
-        if square_x - self.square_x != 0:
-            is_x = True
-            exis = [square_x, self.square_x]
-        else:
-            is_x = False
-            exis = [square_y, self.square_y]
-
-        # Ordena a lista
-        if exis[1] < exis[0]:
-            exis.append(exis.pop(0))
-
-        # Checa se existe alguém no meio do caminho do movimento
-        for i in range(exis[0], exis[1] - 1):
-            if game_matriz[i if is_x else self.square_x - 1][
-                self.square_y - 1 if is_x else i
-            ]:
-                return False
-
-        return True
+        # se se moveu apenas da direcao vertical, detecta a colisao vertical
+        if xMov == 0:
+            if not super().detect_vertical_collision(square_y, game_matriz):
+                self._first_round = False
+                return True
+        # se se moveu apenas da direcao horizontal, detecta a colisao horizontal
+        elif yMov == 0:
+            if not super().detect_horizontal_collision(square_x, game_matriz):
+                self._first_round = False
+                return True
+        return False
 
 
 class HorseSprite(AbstractSprite):
@@ -99,9 +141,6 @@ class HorseSprite(AbstractSprite):
         )
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
-
         # Se apenas de movimentar em um dos eixos
         if (square_x - self.square_x != 0 and square_y - self.square_y == 0) or (
             square_x - self.square_x == 0 and square_y - self.square_y != 0
@@ -127,30 +166,19 @@ class Bishop(AbstractSprite):
         )
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
-
+        # verifica o numero de casas andadas nos eixos
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
         if abs(xMov) != abs(yMov):
             return False
 
-        indX = self.square_x - 1
-        indY = self.square_y - 1
-        incX = 1 if xMov > 0 else -1
-        incY = 1 if yMov > 0 else -1
-
-        for i in range(0, abs(xMov)):
-            indX += incX
-            indY += incY
-            if game_matriz[indX][indY]:
-                return False
-        return True
+        return not super().detect_diagonal_collision(square_x, square_y, game_matriz)
 
 
 class King(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
+        is_in_check = False
         super().__init__(
             "./icons/png/009-king-dark.png"
             if player_number == 2
@@ -159,17 +187,32 @@ class King(AbstractSprite):
             pos_y,
             player_number,
         )
+        self._first_round = True
+        self.is_in_check = False
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
-
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
+        if abs(xMov) == 2 and yMov == 0 and self._first_round:
+            rook = (
+                game_matriz[0][self.square_y - 1]
+                if xMov < 0
+                else game_matriz[7][self.square_y - 1]
+            )
+            rook_mov = 2 if xMov < 0 else -3
+            if rook.__class__.__name__ == "RookSprite":
+                if rook._first_round:
+                    if not super().detect_horizontal_collision(square_x, game_matriz):
+                        rook.square_x = rook.square_x + rook_mov
+                        self._first_round = False
+                        return True
+            else:
+                rook = game_matriz[0][self.square_y]
+
         if abs(xMov) > 1 or abs(yMov) > 1:
             return False
-
+        self._first_round = False
         return True
 
 
@@ -185,37 +228,23 @@ class Queen(AbstractSprite):
         )
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
-
+        # verifica a quantidade de movimento em cada direcao
         xMov = square_x - self.square_x
         yMov = square_y - self.square_y
 
-        indX = self.square_x - 1
-        indY = self.square_y - 1
-        incX = 1 if xMov > 0 else -1
-        incY = 1 if yMov > 0 else -1
-
-        if xMov == 0 or yMov == 0:
-            variavel = indX if yMov == 0 else indY
-            fixo = indY if yMov == 0 else indX
-            qtd = xMov if yMov == 0 else yMov
-            for i in range(0, qtd, incX if yMov == 0 else incY):
-                variavel = variavel + (incX if yMov == 0 else incY)
-                hor = variavel if yMov == 0 else fixo
-                vert = fixo if yMov == 0 else variavel
-                if game_matriz[hor][vert]:
-                    return False
-            return True
-
-        if abs(xMov) == abs(yMov):
-            for i in range(0, abs(xMov)):
-                indX += incX
-                indY += incY
-                if game_matriz[indX][indY]:
-                    return False
-            return True
-
+        # se se moveu apenas da direcao vertical, detecta a colisao vertical
+        if xMov == 0:
+            if not super().detect_vertical_collision(square_y, game_matriz):
+                return True
+        # se se moveu apenas da direcao horizontal, detecta a colisao horizontal
+        elif yMov == 0:
+            if not super().detect_horizontal_collision(square_x, game_matriz):
+                return True
+        # se se moveu diagonalmente, detecta a colisao diagonal
+        elif abs(xMov) == abs(yMov):
+            return not super().detect_diagonal_collision(
+                square_x, square_y, game_matriz
+            )
         return False
 
 
@@ -229,11 +258,47 @@ class Pawn(AbstractSprite):
             pos_y,
             player_number,
         )
+        self._initial_y = pos_y
         self._first_round = True
+        self.en_passant_risk = False
 
     def check_move(self, square_x, square_y, game_matriz):
-        if not super().check_move(square_x, square_y, game_matriz):
-            return False
+        if self._first_round and self._initial_y != self.square_y:
+            self._first_round = False
+
+        xMov = (
+            square_x - self.square_x
+        )  # if self._player_number == 1 else square_x - self.square_x
+        yMov = (
+            square_y - self.square_y
+        )  # if self._player_number == 1 else square_y - self.square_y
+
+        if abs(xMov) == 1 and abs(yMov) == 1:
+            if (self.player_number == 1 and square_y == 6) or (
+                self.player_number == 2 and square_y == 3
+            ):
+                print("ok 1")
+                if not game_matriz[square_x - 1][square_y - 1]:
+                    print("ok 2")
+                    candidate = game_matriz[square_x - 1][self.square_y - 1]
+                    if candidate:
+                        print("ok 3")
+                        if candidate.__class__.__name__ == "Pawn":
+                            print("ok 4")
+                            if candidate.en_passant_risk:
+                                print("ok 5")
+                                candidate.square_y = square_y
+                                game_matriz[square_x - 1][square_y - 1] = candidate
+
+        capture_mov = super().check_capture(square_x, square_y, game_matriz)
+
+        if capture_mov:
+            print("ok 6")
+            if abs(xMov) == 1 and abs(yMov) == 1:
+                print("ok 7")
+                return True
+            elif xMov == 0:
+                return False
 
         # Cria lista para saber a ordem da subtração na condição dependendo do jogador
         y_diff = (
@@ -260,5 +325,9 @@ class Pawn(AbstractSprite):
         ):
             return False
 
-        self._first_round = False
+        if self._first_round and abs(square_y - self.square_y) == 2:
+            self.en_passant_risk = True
+        else:
+            self.en_passant_risk = False
+
         return True

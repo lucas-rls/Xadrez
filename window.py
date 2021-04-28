@@ -1,22 +1,26 @@
 import arcade
 from constants import (
+    WINDOW_SIZE,
     CHESSBOARD_SIZE,
     SQUARE_SIZE,
     LEFT_MARGIN,
     BOTTOM_MARGIN,
     BRIGHTER_SQUARE,
     DARKER_SQUARE,
+    BORDER_MARGIN,
 )
 from player import Player
 from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
 import math
 from arcade import color
+from buttons import MyFlatButton
+from arcade.gui import UIManager
+from help_view import InstructionView
 
 
-class GameWindow(arcade.Window):
+class GameWindow(arcade.View):
     def __init__(self):
-        super().__init__(CHESSBOARD_SIZE, CHESSBOARD_SIZE, "Jogo de Xadrez - ESII")
-
+        super().__init__()
         self.player_1 = None
         self.player_2 = None
         self.game_matriz = [[0] * 8 for i in range(8)]
@@ -26,9 +30,24 @@ class GameWindow(arcade.Window):
         self.waiting_player = 2
         self.selected_sprite = None
 
+        self.ui_manager = UIManager()
+
     def setup(self):
         self.player_1 = self.create_player("Lucas", 1)
         self.player_2 = self.create_player("Máquina", 2)
+
+    def on_show(self):
+        self.ui_manager.purge_ui_elements()
+        button = MyFlatButton(
+            text="Ajuda",
+            center_x=WINDOW_SIZE / 2,
+            center_y=WINDOW_SIZE - 23,
+            width=250,
+            actual_view=self,
+            next_view=InstructionView(self),
+        )
+        self.ui_manager.add_ui_element(button)
+        arcade.set_background_color(arcade.color.BLACK)
 
     def on_draw(self):
         arcade.start_render()
@@ -38,69 +57,79 @@ class GameWindow(arcade.Window):
 
         self.initialize_matriz()
 
-        # Finish the render.
-        arcade.finish_render()
-
     def on_mouse_press(self, x, y, button, modifiers):
-        square_x = (
-            x / SQUARE_SIZEx + 1 if x % SQUARE_SIZE == 0 else math.ceil(x / SQUARE_SIZE)
-        )
-        square_y = (
-            y / SQUARE_SIZEx + 1 if y % SQUARE_SIZE == 0 else math.ceil(y / SQUARE_SIZE)
-        )
-        print(square_x, square_y)
-        # Recupera a instância da peça no quadrado do primeiro clique
-        sprite = self.game_matriz[square_x - 1][square_y - 1]
+        if (
+            x >= BORDER_MARGIN
+            and x <= CHESSBOARD_SIZE + BORDER_MARGIN
+            and y >= BORDER_MARGIN
+            and y <= CHESSBOARD_SIZE
+        ):
+            x = x - BORDER_MARGIN
+            y = y - BORDER_MARGIN
 
-        # se clicou em um lugar que tenha um sprite...
-        if sprite:
-            # caso o sprite seja do jogador, seleciona o sprite clicado
-            if sprite._player_number == self.active_player:
-                self.selected_sprite = sprite
-            # caso seja um sprite do adversario
+            square_x = (
+                x / SQUARE_SIZE + 1
+                if x % SQUARE_SIZE == 0
+                else math.ceil(x / SQUARE_SIZE)
+            )
+            square_y = (
+                y / SQUARE_SIZE + 1
+                if y % SQUARE_SIZE == 0
+                else math.ceil(y / SQUARE_SIZE)
+            )
+            print(square_x, square_y)
+            # Recupera a instância da peça no quadrado do primeiro clique
+            sprite = self.game_matriz[square_x - 1][square_y - 1]
+
+            # se clicou em um lugar que tenha um sprite...
+            if sprite:
+                # caso o sprite seja do jogador, seleciona o sprite clicado
+                if sprite._player_number == self.active_player:
+                    self.selected_sprite = sprite
+                # caso seja um sprite do adversario
+                else:
+                    # se ha um sprite selecionado...
+                    if self.selected_sprite:
+                        # testa o movimento pra aquele lugar...
+                        if self.selected_sprite.check_move(
+                            square_x, square_y, self.game_matriz
+                        ):
+                            # se o movimento eh valido....
+                            # envia o sprite pro cemiterio do adversario
+                            self.get_waiting_player().send_to_cemetery(sprite)
+
+                            # chama a verificacao do check e realiza o movimento se tudo esta ok
+                            if self.move_and_verify_check(square_x, square_y, sprite):
+                                # verifica se o rei do adversario ficara em check e atualiza o status do rei adversario
+                                self.results_check(self.waiting_player)
+                                self.change_turn()
+
             else:
-                # se ha um sprite selecionado...
                 if self.selected_sprite:
-                    # testa o movimento pra aquele lugar...
                     if self.selected_sprite.check_move(
                         square_x, square_y, self.game_matriz
                     ):
-                        # se o movimento eh valido....
-                        # envia o sprite pro cemiterio do adversario
-                        self.get_waiting_player().send_to_cemetery(sprite)
+                        # trata condicao do en passant
+                        if (
+                            self.selected_sprite.__class__.__name__ == "Pawn"
+                            and square_y == 3
+                            or square_y == 6
+                        ):
+                            sprite = self.game_matriz[square_x - 1][square_y - 1]
+                            if sprite:
+                                self.get_waiting_player().send_to_cemetery(sprite)
 
-                        # chama a verificacao do check e realiza o movimento se tudo esta ok
                         if self.move_and_verify_check(square_x, square_y, sprite):
-                            # verifica se o rei do adversario ficara em check e atualiza o status do rei adversario
+                            # checa promocao do peao
+                            if self.selected_sprite.__class__.__name__ == "Pawn":
+                                if (square_y == 8 and self.active_player == 1) or (
+                                    square_y == 1 and self.active_player == 2
+                                ):
+                                    self.promote_pawn(
+                                        self.selected_sprite, self.active_player
+                                    )
                             self.results_check(self.waiting_player)
                             self.change_turn()
-
-        else:
-            if self.selected_sprite:
-                if self.selected_sprite.check_move(
-                    square_x, square_y, self.game_matriz
-                ):
-                    # trata condicao do en passant
-                    if (
-                        self.selected_sprite.__class__.__name__ == "Pawn"
-                        and square_y == 3
-                        or square_y == 6
-                    ):
-                        sprite = self.game_matriz[square_x - 1][square_y - 1]
-                        if sprite:
-                            self.get_waiting_player().send_to_cemetery(sprite)
-
-                    if self.move_and_verify_check(square_x, square_y, sprite):
-                        # checa promocao do peao
-                        if self.selected_sprite.__class__.__name__ == "Pawn":
-                            if (square_y == 8 and self.active_player == 1) or (
-                                square_y == 1 and self.active_player == 2
-                            ):
-                                self.promote_pawn(
-                                    self.selected_sprite, self.active_player
-                                )
-                        self.results_check(self.waiting_player)
-                        self.change_turn()
 
     def initialize_matriz(self):
         p1 = self.get_active_player().player_list
@@ -121,8 +150,8 @@ class GameWindow(arcade.Window):
             # Loop for each column
             for column in range(8):
                 # Calculate our location
-                x = column * SQUARE_SIZE + LEFT_MARGIN
-                y = row * SQUARE_SIZE + BOTTOM_MARGIN
+                x = column * SQUARE_SIZE + LEFT_MARGIN + BORDER_MARGIN
+                y = row * SQUARE_SIZE + BOTTOM_MARGIN + BORDER_MARGIN
 
                 # Draw the item
                 arcade.draw_rectangle_filled(
@@ -139,8 +168,12 @@ class GameWindow(arcade.Window):
         if self.selected_sprite:
             # Draw the item
             arcade.draw_rectangle_filled(
-                (self.selected_sprite.square_x - 1) * SQUARE_SIZE + LEFT_MARGIN,
-                (self.selected_sprite.square_y - 1) * SQUARE_SIZE + BOTTOM_MARGIN,
+                (self.selected_sprite.square_x - 1) * SQUARE_SIZE
+                + LEFT_MARGIN
+                + BORDER_MARGIN,
+                (self.selected_sprite.square_y - 1) * SQUARE_SIZE
+                + BOTTOM_MARGIN
+                + BORDER_MARGIN,
                 SQUARE_SIZE,
                 SQUARE_SIZE,
                 (255, 191, 0),
@@ -148,16 +181,17 @@ class GameWindow(arcade.Window):
 
             for i in range(len(self.game_matriz)):
                 for j in range(len(self.game_matriz[i])):
-                    if self.selected_sprite.check_move(
-                        i + 1, j + 1, self.game_matriz
-                    ) and (
-                        not self.game_matriz[i][j]
-                        or self.selected_sprite.player_number
-                        != self.game_matriz[i][j].player_number
+                    if (  # Se á peça pode se mover até a desejada posição
+                        self.selected_sprite.check_move(i + 1, j + 1, self.game_matriz)
+                        and (  # E a nova posição não contém uma peça do mesmo jogador
+                            not self.game_matriz[i][j]
+                            or self.selected_sprite.player_number
+                            != self.game_matriz[i][j].player_number
+                        )
                     ):
                         arcade.draw_rectangle_filled(
-                            (i) * SQUARE_SIZE + LEFT_MARGIN,
-                            (j) * SQUARE_SIZE + BOTTOM_MARGIN,
+                            (i) * SQUARE_SIZE + LEFT_MARGIN + BORDER_MARGIN,
+                            (j) * SQUARE_SIZE + BOTTOM_MARGIN + BORDER_MARGIN,
                             SQUARE_SIZE,
                             SQUARE_SIZE,
                             (0, 127, 255, 200),
@@ -282,8 +316,10 @@ class GameWindow(arcade.Window):
 
 
 def main():
+    window = arcade.Window(WINDOW_SIZE, WINDOW_SIZE, "Jogo de Xadrez - ESII")
     game = GameWindow()
     game.setup()
+    window.show_view(game)
     arcade.run()
 
 

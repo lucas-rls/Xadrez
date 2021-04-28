@@ -1,5 +1,11 @@
 import arcade
-from constants import SPRITE_SCALING_PLAYER, SQUARE_SIZE
+from constants import (
+    WINDOW_SIZE,
+    CHESSBOARD_SIZE,
+    SQUARE_SIZE,
+    SPRITE_SCALING_PLAYER,
+    BORDER_MARGIN,
+)
 
 
 class AbstractSprite(arcade.Sprite):
@@ -8,8 +14,8 @@ class AbstractSprite(arcade.Sprite):
         self._square_x = pos_x
         self._square_y = pos_y
         self._player_number = player_number
-        self.center_x = SQUARE_SIZE * pos_x - SQUARE_SIZE / 2
-        self.center_y = SQUARE_SIZE * pos_y - SQUARE_SIZE / 2
+        self.center_x = SQUARE_SIZE * pos_x - SQUARE_SIZE / 2 + BORDER_MARGIN
+        self.center_y = SQUARE_SIZE * pos_y - SQUARE_SIZE / 2 + BORDER_MARGIN
 
     @property
     def square_x(self):
@@ -26,12 +32,12 @@ class AbstractSprite(arcade.Sprite):
     @square_x.setter
     def square_x(self, pos_x):
         self._square_x = pos_x
-        self.center_x = SQUARE_SIZE * pos_x - SQUARE_SIZE / 2
+        self.center_x = SQUARE_SIZE * pos_x - SQUARE_SIZE / 2 + BORDER_MARGIN
 
     @square_y.setter
     def square_y(self, pos_y):
         self._square_y = pos_y
-        self.center_y = SQUARE_SIZE * pos_y - SQUARE_SIZE / 2
+        self.center_y = SQUARE_SIZE * pos_y - SQUARE_SIZE / 2 + BORDER_MARGIN
 
     @player_number.setter
     def player_number(self, player_number):
@@ -277,25 +283,18 @@ class Pawn(AbstractSprite):
             if (self.player_number == 1 and square_y == 6) or (
                 self.player_number == 2 and square_y == 3
             ):
-                print("ok 1")
                 if not game_matriz[square_x - 1][square_y - 1]:
-                    print("ok 2")
                     candidate = game_matriz[square_x - 1][self.square_y - 1]
                     if candidate:
-                        print("ok 3")
                         if candidate.__class__.__name__ == "Pawn":
-                            print("ok 4")
                             if candidate.en_passant_risk:
-                                print("ok 5")
                                 candidate.square_y = square_y
                                 game_matriz[square_x - 1][square_y - 1] = candidate
 
         capture_mov = super().check_capture(square_x, square_y, game_matriz)
 
         if capture_mov:
-            print("ok 6")
             if abs(xMov) == 1 and abs(yMov) == 1:
-                print("ok 7")
                 return True
             elif xMov == 0:
                 return False

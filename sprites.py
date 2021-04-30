@@ -214,7 +214,7 @@ class King(AbstractSprite):
                         self._first_round = False
                         return True
             else:
-                rook = game_matriz[0][self.square_y]
+                rook = game_matriz[0][self.square_y-1]
 
         if abs(xMov) > 1 or abs(yMov) > 1:
             return False

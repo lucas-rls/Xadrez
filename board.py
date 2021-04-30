@@ -10,12 +10,13 @@ from constants import (
     BORDER_MARGIN,
 )
 from player import Player
-from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
+from sprites import Rook, Horse, Bishop, King, Queen, Pawn
 import math
 from arcade import color
 from buttons import MyFlatButton
 from arcade.gui import UIManager
 from help_view import InstructionView
+from ia import minimax
 
 
 class Board(object):
@@ -30,8 +31,11 @@ class Board(object):
         self.waiting_player = 2
         self.selected_sprite = None
 
-        self.last_move = None
-        self.last_move_sprite = None
+        self.last_moves = []
+
+        self.weights = {"King": 900, "Queen": 90, "Rook": 50, "Bishop": 30, "Horse": 30, "Pawn": 10}
+        self.player1_score = 1290
+        self.player2_score = 1290
 
         self.initialize_matriz()
 
@@ -69,6 +73,14 @@ class Board(object):
         # limpa a selecao
         self.selected_sprite = None
 
+        if self.active_player == 2:
+            best_move = minimax(self, 3, True, 2)[0]
+            print(best_move)
+            self.selected_sprite = best_move[0]
+            self.move_and_verify_check(best_move[1], best_move[2], self.game_matriz[best_move[1]-1][best_move[2]-1])
+            self.print_matrix(self.game_matriz)
+            self.change_turn()
+
     # funcao de promocao do peao (ainda precisa ser alterada para pegar uma peca do cemiterio)
     def promote_pawn(self, pawn_sprite, active_player):
         # pega o player atual
@@ -82,7 +94,7 @@ class Board(object):
 
     # funcao que verifica o check de um rei
     def results_check(self, player_number):
-        print("verificou o check para o player ", player_number)
+        #print("verificou o check para o player ", player_number)
         # pl = o jogador que tem o rei que sera testado
         pl = self.get_player(player_number)
 
@@ -112,17 +124,20 @@ class Board(object):
         return False
 
     def move(self, square_x, square_y, sprite):
+        print("chamooou")
         old_square_x = self.selected_sprite.square_x
         old_square_y = self.selected_sprite.square_y
-
-        self.last_move = [old_square_x, old_square_y]
-        
-        self.last_move_sprite = None
 
         if sprite:
             # envia o sprite pro cemiterio do adversario
             self.get_waiting_player().send_to_cemetery(sprite)
-            self.last_move_sprite = sprite
+
+            if self.get_waiting_player().player_number == 1:
+                self.player1_score -= self.weights[type(sprite).__name__]
+            else:
+                self.player2_score -= self.weights[type(sprite).__name__]
+        
+        self.last_moves.append([old_square_x, old_square_y, sprite, self.selected_sprite])
 
         self.selected_sprite.square_x = square_x
         self.selected_sprite.square_y = square_y
@@ -132,16 +147,23 @@ class Board(object):
         return True
     
     def undo_move(self):
-        self.selected_sprite.square_x = self.last_move[0]
-        self.selected_sprite.square_y = self.last_move[1]
-
-        if self.last_move_sprite:
-            self.get_player(self.waiting_player).cemetery.remove(self.last_move_sprite)
-            self.get_player(self.waiting_player).player_list.append(self.last_move_sprite)
-            self.game_matriz[self.last_move_sprite.square_x - 1][self.last_move_sprite.square_y - 1] = self.last_move_sprite
+        sprite = self.last_moves[-1][3]
+        sprite.square_x = self.last_moves[-1][0]
+        sprite.square_y = self.last_moves[-1][1]
         
-        self.last_move_sprite = None
-        self.last_move = None
+        last_move_sprite = self.last_moves[-1][2]
+
+        if last_move_sprite:
+            self.get_player(self.waiting_player).cemetery.remove(last_move_sprite)
+            self.get_player(self.waiting_player).player_list.append(last_move_sprite)
+            self.game_matriz[last_move_sprite.square_x - 1][last_move_sprite.square_y - 1] = last_move_sprite
+
+            if self.get_waiting_player().player_number == 1:
+                self.player1_score += self.weights[type(last_move_sprite).__name__]
+            else:
+                self.player2_score += self.weights[type(last_move_sprite).__name__]
+        
+        self.last_moves.pop()
 
         self.initialize_matriz()
 
@@ -210,3 +232,39 @@ class Board(object):
                                 )
                         self.results_check(self.waiting_player)
                         self.change_turn()
+
+    def get_moves(self):
+        moves = []
+        for sprite in self.get_active_player().player_list:
+            self.selected_sprite = sprite
+            print(self.active_player)
+            self.print_matrix(self.game_matriz)
+            for i in range(len(self.game_matriz)):
+                for j in range(len(self.game_matriz[i])):
+                    if (  # Se á peça pode se mover até a desejada posição
+                        self.selected_sprite.check_move(i + 1, j + 1, self.game_matriz)
+                        and (  # E a nova posição não contém uma peça do mesmo jogador
+                            not self.game_matriz[i][j]
+                            or self.selected_sprite.player_number
+                            != self.game_matriz[i][j].player_number
+                        )
+                    ):
+                        self.move(i+1, j+1, self.game_matriz[i][j])
+                        # verifica se o rei do jogador ira ficar em check
+                        active_player_king_check = self.results_check(self.active_player)
+                        self.get_active_player().change_king_check_status(False)
+                        
+                        self.undo_move()
+
+                        if not active_player_king_check:
+                            moves.append([sprite, i+1, j+1])
+        return moves
+    
+    @staticmethod
+    def print_matrix(matrix):
+        s = [[(type(e).__name__ if type(e)!=int else "-") for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        print('\n'.join(table))
+        print("---------------------------------------------------------------------------")

@@ -10,7 +10,7 @@ from constants import (
     BORDER_MARGIN,
 )
 from player import Player
-from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
+from sprites import Rook, Horse, Bishop, King, Queen, Pawn
 import math
 from arcade import color
 from buttons import MyFlatButton
@@ -116,7 +116,6 @@ class GameWindow(arcade.View):
                         # verifica se o rei do jogador ira ficar em check
                         active_player_king_check = self.board.results_check(self.board.active_player)
                         self.board.get_active_player().change_king_check_status(False)
-                        
                         self.board.undo_move()
 
                         if not active_player_king_check:

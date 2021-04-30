@@ -104,7 +104,7 @@ class AbstractSprite(arcade.Sprite):
         return False
 
 
-class RookSprite(AbstractSprite):
+class Rook(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
         super().__init__(
             "./icons/png/006-rook-dark.png"
@@ -135,7 +135,7 @@ class RookSprite(AbstractSprite):
         return False
 
 
-class HorseSprite(AbstractSprite):
+class Horse(AbstractSprite):
     def __init__(self, pos_x, pos_y, player_number):
         super().__init__(
             "./icons/png/010-horse-dark.png"
@@ -207,7 +207,7 @@ class King(AbstractSprite):
                 else game_matriz[7][self.square_y - 1]
             )
             rook_mov = 2 if xMov < 0 else -3
-            if rook.__class__.__name__ == "RookSprite":
+            if rook.__class__.__name__ == "Rook":
                 if rook._first_round:
                     if not super().detect_horizontal_collision(square_x, game_matriz):
                         rook.square_x = rook.square_x + rook_mov

@@ -78,7 +78,6 @@ class Board(object):
             print(best_move)
             self.selected_sprite = best_move[0]
             self.move_and_verify_check(best_move[1], best_move[2], self.game_matriz[best_move[1]-1][best_move[2]-1])
-            self.print_matrix(self.game_matriz)
             self.change_turn()
 
     # funcao de promocao do peao (ainda precisa ser alterada para pegar uma peca do cemiterio)
@@ -124,7 +123,6 @@ class Board(object):
         return False
 
     def move(self, square_x, square_y, sprite):
-        print("chamooou")
         old_square_x = self.selected_sprite.square_x
         old_square_y = self.selected_sprite.square_y
 
@@ -238,7 +236,6 @@ class Board(object):
         for sprite in self.get_active_player().player_list:
             self.selected_sprite = sprite
             print(self.active_player)
-            self.print_matrix(self.game_matriz)
             for i in range(len(self.game_matriz)):
                 for j in range(len(self.game_matriz[i])):
                     if (  # Se á peça pode se mover até a desejada posição

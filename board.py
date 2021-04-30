@@ -17,6 +17,9 @@ from buttons import MyFlatButton
 from arcade.gui import UIManager
 from help_view import InstructionView
 from ia import minimax
+import threading
+from copy import deepcopy
+from os import sys
 
 
 class Board(object):
@@ -61,6 +64,20 @@ class Board(object):
     def get_waiting_player(self):
         return self.get_player(self.waiting_player)
 
+    def determine_move(self):
+        best_move = minimax(deepcopy(self), 3, True, 2)[0]
+        for sprite in self.get_active_player().player_list:
+            if sprite.square_x == best_move[0].square_x and sprite.square_y == best_move[0].square_y:
+                best_move[0] = sprite
+
+        self.selected_sprite = best_move[0]
+        self.move_and_verify_check(best_move[1], best_move[2], self.game_matriz[best_move[1]-1][best_move[2]-1])
+        self.change_turn()
+
+        # Fecha thread depois de descobrir o movimento
+        sys.exit()
+
+
     # funcao que muda o turno
     def change_turn(self):
         print("+==========MUDOU O TURNO===============\n VEZ DE:", self.waiting_player)
@@ -74,11 +91,9 @@ class Board(object):
         self.selected_sprite = None
 
         if self.active_player == 2:
-            best_move = minimax(self, 3, True, 2)[0]
-            print(best_move)
-            self.selected_sprite = best_move[0]
-            self.move_and_verify_check(best_move[1], best_move[2], self.game_matriz[best_move[1]-1][best_move[2]-1])
-            self.change_turn()
+            # Abre uma thread para descobrir o movimento
+            t = threading.Thread(target=self.determine_move)
+            t.start()
 
     # funcao de promocao do peao (ainda precisa ser alterada para pegar uma peca do cemiterio)
     def promote_pawn(self, pawn_sprite, active_player):

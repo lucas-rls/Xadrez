@@ -1,5 +1,5 @@
 import arcade
-from sprites import RookSprite, HorseSprite, Bishop, King, Queen, Pawn
+from sprites import Rook, Horse, Bishop, King, Queen, Pawn
 
 
 class Player:
@@ -12,14 +12,14 @@ class Player:
         first_row = 1 if player_number == 1 else 8
         second_row = 2 if player_number == 1 else 7
 
-        self.player_list.append(RookSprite(1, first_row, player_number))
-        self.player_list.append(HorseSprite(2, first_row, player_number))
+        self.player_list.append(Rook(1, first_row, player_number))
+        self.player_list.append(Horse(2, first_row, player_number))
         self.player_list.append(Bishop(3, first_row, player_number))
         self.player_list.append(King(4, first_row, player_number))
         self.player_list.append(Queen(5, first_row, player_number))
         self.player_list.append(Bishop(6, first_row, player_number))
-        self.player_list.append(HorseSprite(7, first_row, player_number))
-        self.player_list.append(RookSprite(8, first_row, player_number))
+        self.player_list.append(Horse(7, first_row, player_number))
+        self.player_list.append(Rook(8, first_row, player_number))
 
         self.player_list.append(Pawn(1, second_row, player_number))
         self.player_list.append(Pawn(2, second_row, player_number))

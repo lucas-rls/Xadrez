@@ -6,3 +6,8 @@ Para rodar o projeto é necessário instalar a biblioteca arcade.
 ```
 pip install arcade
 ```
+## Rodando o jogo
+O arquivo principal desse projeto é o window.py, logo para executar o jogo temos que utilizar o seguinte comando:
+```
+python window.py
+```
